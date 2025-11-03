@@ -1,0 +1,39 @@
+version: "3"
+services:
+    db:
+      image: postgres
+      restart: always
+      ports:
+        - "5432:5432"
+      environment:
+          POSTGRES_USER: david
+          POSTGRES_PASSWORD: gelang123
+          POSTGRES_DB: medsos-db
+      volumes:
+        - db-volumes:/var/lib/postgresql/data
+      networks:
+        - app-networks
+    
+    migration-databse:
+        container_name: migration_database_container
+        restart: on-failure
+        build: 
+          context: .
+          dockerfile: ./build/migrate.dockerfile
+        command: ["-verbose", "up"]
+        environment:
+          DATABASE_URL: postgres://david:gelang123@db:5432/medsos-db?sslmode=disable
+        depends_on:
+          - db
+        networks:
+          - app-networks
+
+        
+        
+
+volumes:
+  db-volumes :
+
+networks:
+  app-networks :
+  
