@@ -37,4 +37,4 @@ jobs:
           context: .
           file: ./build/app.dockerfile
           push: true
-          tags: yourusername/app:latest
+          tags: ${{secrets.DOCKERHUB_USERNAME}}/sosmed-api-go:latest
