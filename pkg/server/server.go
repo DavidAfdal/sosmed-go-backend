@@ -11,6 +11,8 @@ import (
 	"github.com/davidafdal/post-app/pkg/response"
 	"github.com/davidafdal/post-app/pkg/route"
 	"github.com/davidafdal/post-app/pkg/token"
+	"github.com/golang-jwt/jwt/v5"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -38,7 +40,7 @@ func NewServer(publicRoutes, privateRoutes []*route.Route, secretKey string, tok
 
 	if len(privateRoutes) > 0 {
 		for _, v := range privateRoutes {
-			v1.Add(v.Method, v.Path, v.Handler, UserContextMiddelware())
+			v1.Add(v.Method, v.Path, v.Handler, JWTProtection(secretKey), UserContextMiddelware())
 		}
 	}
 
@@ -78,17 +80,29 @@ func UserContextMiddelware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 
-			userID := c.Request().Header.Get("X-User-ID")
-			userEmail := c.Request().Header.Get("X-User-Email")
-
-			if userID == "" {
-				return response.ErrorResponse(c, http.StatusUnauthorized, "unauthorized - missing user context")
+			user, ok := c.Get("user").(*jwt.Token)
+			if !ok {
+				return response.ErrorResponse(c, http.StatusUnauthorized, "anda harus login untuk mengakses resource ini")
 			}
 
-			c.Set("user_id", userID)
-			c.Set("user_email", userEmail)
+			claims := user.Claims.(*token.JwtCustomClaims)
+
+			c.Set("user_id", claims.ID)
+			c.Set("user_email", claims.Email)
 
 			return next(c)
 		}
 	}
+}
+
+func JWTProtection(secretKey string) echo.MiddlewareFunc {
+	return echojwt.WithConfig(echojwt.Config{
+		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+			return new(token.JwtCustomClaims)
+		},
+		SigningKey: []byte(secretKey),
+		ErrorHandler: func(c echo.Context, err error) error {
+			return response.ErrorResponse(c, http.StatusUnauthorized, "anda harus login untuk mengakses resource ini")
+		},
+	})
 }

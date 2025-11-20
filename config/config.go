@@ -13,7 +13,8 @@ type Config struct {
 	Port       string           `env:"PORT" envDefault:"5000"`
 	Postgres   PostgresConfig   `envPrefix:"POSTGRES_"`
 	JWT        JWTConfig        `envPrefix:"JWT_"`
-	Cloudinary CloudinaryConfig `envPrefix:"CLOUDINARY"`
+	Rabbit     RabbitConfig     `envPrefix:"RABBITMQ_"`
+	Cloudinary CloudinaryConfig `envPrefix:"CLOUDINARY_"`
 }
 
 type PostgresConfig struct {
@@ -30,6 +31,11 @@ type JWTConfig struct {
 }
 
 type CloudinaryConfig struct {
+	Url string `env:"URL" envDefault:""`
+}
+
+type RabbitConfig struct {
+	Url string `env:"URL"`
 }
 
 func NewConfig() (*Config, error) {
